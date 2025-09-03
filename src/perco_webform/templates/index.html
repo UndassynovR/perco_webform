@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Face form — perco_webform</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+</head>
+<body>
+  <main class="center">
+    <div class="card">
+      <h1>Регистрация лица</h1>
+
+      <!-- STEP 1: IIN -->
+      <section class="section" id="step-iin">
+        <label for="iin">ИИН</label>
+        <div class="row">
+          <input id="iin" name="iin" type="text" inputmode="numeric"
+                 maxlength="12" pattern="\d{12}" placeholder="Введите ИИН" />
+          <button id="checkIinBtn" class="btn">Проверить</button>
+        </div>
+        <div id="iinError" class="error" aria-live="polite"></div>
+        <div id="userName" class="muted"></div>
+      </section>
+
+      <!-- STEP 2: Photo (disabled until IIN confirmed) -->
+      <section class="section" id="step-photo">
+        <label for="photo">Фото</label>
+        <div id="photoWrapper" class="photo-wrapper disabled">
+          <input id="photo" type="file" accept="image/*" />
+          <div id="photoHint" class="muted">Фото недоступно — подтвердите ИИН</div>
+        </div>
+
+        <div id="previewArea" class="preview-area" hidden>
+          <h3>Предпросмотр (обрезка 3:4)</h3>
+          <img id="previewImage" alt="Cropped preview" />
+          <div class="preview-controls">
+            <button id="cropBtn" class="btn">Обрезать автоматически (3:4)</button>
+            <button id="clearPhotoBtn" class="btn secondary">Выбрать другое</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 3: Submit -->
+      <section class="section" id="step-submit">
+        <button id="submitBtn" class="btn submit" disabled>Отправить</button>
+        <div id="submitMsg" class="muted" aria-live="polite"></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="{{ url_for('static', filename='cropper.js') }}"></script>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

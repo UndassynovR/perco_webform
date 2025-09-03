@@ -1,0 +1,38 @@
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("iinForm");
+    const input = document.getElementById("iin");
+    const resultDiv = document.getElementById("result");
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const iin = input.value.trim();
+
+        // Client-side validation: 12 digits
+        if (!/^\d{12}$/.test(iin)) {
+            alert("ИИН должен состоять из 12 цифр.");
+            input.value = "";
+            return;
+        }
+
+        try {
+            const resp = await fetch("/api/get_user_by_iin", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ iin: iin })
+            });
+            const data = await resp.json();
+
+            if (data.success) {
+                resultDiv.innerText =
+                    data.last_name + " " + data.first_name + " " + data.middle_name;
+            } else {
+                alert("Пользователь не найден.");
+                input.value = "";
+                resultDiv.innerText = "";
+            }
+        } catch (err) {
+            alert("Ошибка соединения с сервером.");
+        }
+    });
+});
+
