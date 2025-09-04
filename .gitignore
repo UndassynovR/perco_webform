@@ -2,4 +2,5 @@
 *~
 .*~
 *#
-src/perco_webform/__pycache__
+src/perco_webform/__pycache__/
+.env
