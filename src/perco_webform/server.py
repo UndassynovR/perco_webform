@@ -1,16 +1,24 @@
-from flask import Flask, request, jsonify, render_template, send_from_directory
-import base64
-
 import os
+import base64
+from flask import Flask, request, jsonify, render_template, send_from_directory
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from dotenv import load_dotenv
 from .database import Database
 from .perco import Perco
 
-from dotenv import load_dotenv
 load_dotenv()
 perco = Perco(os.getenv("PERCO_SERVER"), os.getenv("PERCO_PORT"), os.getenv("PERCO_LOGIN"), os.getenv("PERCO_PASSWORD"))
 db = Database(os.getenv("DB_HOST"), os.getenv("DB_PORT"), os.getenv("DB_USER"), os.getenv("DB_PASSWORD"), os.getenv("DB_NAME"))
 
 app = Flask(__name__)
+
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    storage_uri="memory://",  # Explicitly specify in-memory
+    default_limits=["200 per day", "50 per hour"]
+)
 
 @app.route("/")
 def index():
@@ -26,6 +34,7 @@ def favicon():
     )
 
 @app.route("/api/users/by_iin/<iin>", methods=["GET"])
+@limiter.limit("5 per minute")
 def get_user_by_iin(iin):
     try:
         print(f"Received IIN: {iin}")
@@ -56,6 +65,7 @@ def extract_base64_image(data_url):
         return None
 
 @app.route("/api/users/<int:user_id>/face", methods=["PUT"])
+@limiter.limit("5 per minute")
 def upsert_user_face(user_id):
     try:
         data = request.get_json()
