@@ -1,0 +1,4 @@
+# Ignore ghost/undo files
+*~
+.*~
+*#

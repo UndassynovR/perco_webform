@@ -47,6 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   checkIinBtn.addEventListener("click", async (ev) => {
     ev.preventDefault();
+
     const iin = iinInput.value.trim();
     iinError.textContent = "";
     userName.textContent = "";
@@ -61,19 +62,22 @@ document.addEventListener("DOMContentLoaded", () => {
     checkIinBtn.textContent = "Проверка...";
 
     try {
-      const resp = await fetch("/api/get_user_by_iin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ iin }),
+      const resp = await fetch(`/api/users/by_iin/${iin}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" }
       });
 
       if (!resp.ok) {
-        if (resp.status === 404) iinError.textContent = "Пользователь не найден";
-        else iinError.textContent = "Ошибка сервера";
+        if (resp.status === 404) {
+          iinError.textContent = "Пользователь не найден";
+        } else {
+          iinError.textContent = "Ошибка сервера";
+        }
         return;
       }
 
       const data = await resp.json();
+
       if (data && data.success) {
         confirmedUser = {
           user_id: data.user_id,
@@ -81,11 +85,13 @@ document.addEventListener("DOMContentLoaded", () => {
           last_name: data.last_name,
           middle_name: data.middle_name,
         };
+
         userName.textContent = `${confirmedUser.last_name} ${confirmedUser.first_name} ${confirmedUser.middle_name || ""}`;
         enablePhotoControls();
       } else {
         iinError.textContent = data && data.error ? data.error : "Не удалось получить данные";
       }
+
     } catch (err) {
       console.error("Ошибка при проверке ИИН:", err);
       iinError.textContent = "Сетевая ошибка";
@@ -95,16 +101,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Listen for cropper events
-  document.addEventListener('photoCropped', (e) => {
-    const { file, canvas } = e.detail;
-    console.log('Photo cropped successfully:', file);
-    
-    // Enable submit button when photo is cropped
-    if (confirmedUser && file) {
-      submitBtn.disabled = false;
-    }
-  });
+	// Listen for cropper events
+	document.addEventListener("photoCropped", (e) => {
+	const { file, canvas } = e.detail;
+	console.log("Photo cropped successfully:", file);
+
+	if (confirmedUser && file) {
+		submitBtn.disabled = false;
+	}
+	});
 
   document.addEventListener('photoCleared', () => {
     console.log('Photo cleared');
@@ -112,51 +117,46 @@ document.addEventListener("DOMContentLoaded", () => {
     submitBtn.disabled = true;
   });
 
-  // Handle form submission
   submitBtn.addEventListener("click", async () => {
-    if (!confirmedUser) { 
-      alert("Сначала подтвердите ИИН"); 
-      return; 
+    if (!confirmedUser) {
+      alert("Сначала подтвердите ИИН");
+      return;
     }
-    
-    if (!window.faceCropper) { 
-      alert("Нет обработчика изображения"); 
-      return; 
+  
+    if (!window.faceCropper) {
+      alert("Нет обработчика изображения");
+      return;
     }
-
-    // Check if image is cropped
+  
     if (!window.faceCropper.isCropped()) {
       alert("Сначала обрежьте изображение");
       return;
     }
-
-    // Get cropped image data
+  
     const croppedCanvas = window.faceCropper.getCroppedCanvas();
     if (!croppedCanvas) {
       alert("Ошибка получения обрезанного изображения");
       return;
     }
-
+  
     submitBtn.disabled = true;
     submitBtn.textContent = "Отправка...";
     submitMsg.textContent = "";
-
+  
     try {
-      // Convert canvas to base64
-      const croppedDataUrl = croppedCanvas.toDataURL('image/jpeg', 0.9);
-
+      const croppedDataUrl = croppedCanvas.toDataURL("image/jpeg", 0.9);
+  
       const payload = {
         iin: iinInput.value.trim(),
-        user_id: confirmedUser.user_id,
         photo: croppedDataUrl
       };
-
-      const resp = await fetch("/api/submit-face", {
-        method: "POST",
+  
+      const resp = await fetch(`/api/users/${confirmedUser.user_id}/face`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
-
+  
       if (!resp.ok) {
         let msg = `Ошибка сервера (${resp.status})`;
         try {
@@ -165,9 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (e) {
           try {
             msg = await resp.text();
-          } catch (e2) {
-            // Keep default message
-          }
+          } catch (e2) { }
         }
         submitMsg.style.color = "#c53030";
         submitMsg.textContent = msg;
@@ -175,11 +173,11 @@ document.addEventListener("DOMContentLoaded", () => {
         submitBtn.textContent = "Отправить";
         return;
       }
-
-      submitMsg.style.color = "#166534";
+  
       const j = await resp.json().catch(() => null);
+      submitMsg.style.color = "#166534";
       submitMsg.textContent = (j && (j.message || "Отправлено")) || "Отправлено";
-
+  
       // Reset UI after successful submission
       setTimeout(() => {
         submitBtn.textContent = "Отправить";
@@ -189,7 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
         submitMsg.textContent = "";
         confirmedUser = null;
       }, 1500);
-
+  
     } catch (err) {
       console.error("Submission error:", err);
       submitMsg.style.color = "#c53030";
