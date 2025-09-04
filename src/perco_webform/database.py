@@ -10,6 +10,7 @@ class Database:
                 user=user,
                 password=password,
                 database=database,
+                autocommit=True
             )
         except Error as e:
             print(f"[DB ERROR] Failed to connect: {e}")
