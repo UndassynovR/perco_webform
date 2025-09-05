@@ -21,6 +21,9 @@ class Database:
         if not self.connection:
             raise RuntimeError("No DB connection")
 
+        # Force refresh the connection's view of data
+        self.connection.commit()  # Even though autocommit=True
+
         cursor = self.connection.cursor(dictionary=True)
 
         # Step 1: get user_id
